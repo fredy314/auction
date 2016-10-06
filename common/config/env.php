@@ -6,7 +6,7 @@ return [
         'db'  => [
             'connectionString'      => 'mysql:host=localhost;dbname=dbname',
             'emulatePrepare'        => true,
-            'username'              => 'dbuser',
+            'username'              => 'dbname',
             'password'              => 'dbpassword',
             'charset'               => 'utf8',
             'enableProfiling'       => true,
