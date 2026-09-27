@@ -296,7 +296,6 @@ class LotCommand extends CConsoleCommand
             'lotModel'     => $lot,
             'amount'       => ($price * 1),
             'sellerModel'  => $sellerModel,
-            'currencyCode' => User::getCurrencyCodeByUserId($idWinner),
         ];
         $ntf = new Notification($idWinner, $params, Notification::TYPE_WINNER_AUCTION);
         $ntf->send();
@@ -313,27 +312,22 @@ class LotCommand extends CConsoleCommand
             'bidPrice'     => $price,
             'amount'       => ($price * 1),
             'buyerModel'   => User::model()->findByPk($idWinner),
-            'currencyCode' => $sellerModel->getCommonData()->currency->code,
         ];
         $ntf = new Notification(
             $lot->owner, $params, Notification::TYPE_COMPLETED_WINNER_LOT);
         $ntf->send();
 
-        //увеличить счетчик события "История покупок" покупателю
         $ce = new HistoryShopping();
         $ce->inc($idWinner, $lot->auction_id);
 
-        //увеличить счетчик события "Проданные лоты" продавцу
         $ce = new HistorySales();
         $ce->inc($lot->owner, $lot->auction_id);
 
-        // Возьмем комиссию если в настройках установлен флг
-         if (Yii::app()->params['comission'] == 1) {
+         if (Yii::app()->params['commission'] == 1) {
             $commissionService = new CommissionService();
             $commissionService->onLotSale($sellerModel, $lot, $price);
         }
 
-        //проверить были ли ставки на лот
         $sql = <<<EOD
         SELECT *
 FROM (
@@ -356,27 +350,18 @@ EOD;
 
 
         if (!empty($bids)) {
-            //пройтись по участникам
             foreach ($bids as $bid) {
-                //увеличить счетчик события не Выигранные
                 $ce = new NotWonItems();
                 $ce->inc($bid['owner']);
-                /**
-                 * послать уведомление о проигрыше
-                 * @notify
-                 */
                 $params = [
                     'linkItem'     => $lot->getLink(true),
                     'bidPrice'     => $bid['price'],
-                    'currencyCode' => User::getCurrencyCodeByUserId($bid['owner']),
                 ];
                 $ntf = new Notification(
                     $bid['owner'], $params, Notification::TYPE_NOT_WON_BIDDING_LOT);
                 $ntf->send();
             }
         }
-
-        //BaseAuction::recache_byId((int)$lot->auction_id);
     }
 
     /**
@@ -394,12 +379,7 @@ EOD;
                 ]
             );
 
-        //BaseAuction::recache_byId((int)$item['auction_id']);
-        /**
-         * @notify
-         *
-         * Срок публикации Вашего объявлени истек
-         */
+
         $params = [
             'linkItem' => BaseAuction::staticGetLink($item['name'], $item['auction_id']),
             'lotName'  => $item['name'],
@@ -408,12 +388,6 @@ EOD;
         //$ntf->send();
     }
 
-    /**
-     *
-     * @param string $dateTimeCompleted
-     *
-     * @return array
-     */
     public function findCompleted($dateTimeCompleted)
     {
         return Yii::app()->db->createCommand()
@@ -429,12 +403,6 @@ EOD;
             ->queryAll();
     }
 
-    /**
-     * @param string $dateTimeCompleted
-     * @param bool   $withBids
-     *
-     * @return array
-     */
     public function findCompletedWithBids($dateTimeCompleted, $withBids = true)
     {
         $sign = $withBids ? '>' : '=';
@@ -465,13 +433,6 @@ EOD;
         return $cmd->queryAll();
     }
 
-    /**
-     * получить победителя аукциона
-     *
-     * @param integer $current_bid
-     *
-     * @return array массив с данными о победители
-     */
     public function getWinnerAuction($current_bid)
     {
         return Yii::app()->db->createCommand()
@@ -482,9 +443,6 @@ EOD;
             ->queryRow();
     }
 
-    /**
-     * @param $item
-     */
     public function republishLot($item)
     {
         $date = new DateTime();

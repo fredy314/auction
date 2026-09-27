@@ -68,7 +68,8 @@ class BuyController extends FrontController
 
                     Yii::app()->user->setFlash(
                         'successful',
-                        'Средства сняты с вашего личного счета. ПРО аккаунт продлен. Спасибо.'
+                        Yii::t('basic', 'PRO account has been renewed')
+
                     );
                     Yii::app()->controller->redirect('/user/pro/index');
                 }
@@ -81,7 +82,7 @@ class BuyController extends FrontController
 
                     Yii::app()->user->setFlash(
                         'successful',
-                        'Средства сняты с вашего личного счета. ПРО аккаунт активирован. Спасибо.'
+                        Yii::t('basic', 'PRO account has been activated')
                     );
                     Yii::app()->controller->redirect('/user/pro/index');
                 }
@@ -90,7 +91,6 @@ class BuyController extends FrontController
         } catch (Exception $e) {
             $transaction->rollBack();
 
-            //недостаточно средств
             if ($e->getCode() == 12) {
                 Yii::app()->user->setFlash('failure_pay', $e->getMessage());
                 Yii::app()->controller->redirect('/user/balance/index');

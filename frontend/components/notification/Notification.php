@@ -68,7 +68,7 @@ class Notification
     {
         if ($user = $this->getUser()) {
             $this->systemNotify();
-            if (!empty($user->email) && ($user->consent_recive_notification == 1) && ($user->ban != 1)) {
+            if (!empty($user->email) && ($user->consent_receive_notification == 1) && ($user->ban != 1)) {
                 $this->emailNotify(
                     $user->email,
                     ['text' => $this->text]
@@ -165,7 +165,6 @@ class Notification
                     'linkItem'       => $this->params['linkItem'],
                     'linkActiveRate' => Yii::app()->createAbsoluteUrl('/user/shopping/activeBets'),
                     'bet'            => $this->params['bet'],
-                    'currencyCode'   => $this->params['currencyCode'],
                 ];
                 return $this->getRendererFile($this->getFile('rateSlaughtered'), $data);
                 break;

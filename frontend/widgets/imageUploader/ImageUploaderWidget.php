@@ -43,7 +43,7 @@ class ImageUploaderWidget extends CWidget
 
     public function run()
     {
-        // Если $type = 1, то фотографии для массового импорта лотов
+
         if (isset($this->type) && $this->type == 1)
         {
             $options = array(
@@ -62,22 +62,18 @@ class ImageUploaderWidget extends CWidget
             
             $type = 0;
         }
-        
-        // Индикатор ранее загруженных изображений
-        $mass_upload = 0;
-        if ($type == 1 && isset(Yii::app()->session['mass_upload']) && !empty(Yii::app()->session['mass_upload']))
-        {
-            $mass_upload = 1;
-        }
 
         if (Yii::app()->request->enableCsrfValidation) {
             $options['csrfTokenName'] = Yii::app()->request->csrfTokenName;
             $options['csrfToken'] = Yii::app()->request->csrfToken;
         }
+
+        $options['mainPhotoText'] = Yii::t('basic', 'Main photo');
+        $options['additionalPhotoText'] =Yii::t('basic', 'Additional photos');
+
         $options = CJavaScript::encode($options);
         $cs = Yii::app()->clientScript;
-        
-        // Если $type = 1, то фотографии для массового импорта лотов
+
         if (isset($this->type) && $this->type == 1)
         {
             $cs->registerCoreScript('jquery')
@@ -101,12 +97,20 @@ class ImageUploaderWidget extends CWidget
             $cs->registerScriptFile($this->assets . '/jquery.iframe-transport.min.js');
         }
 
+        cs()->registerScript('create_rewiew', "
+
+        $('.del-all-photos').click(function() {
+            if(confirm('" . Yii::t('basic', 'Do you really want to delete these photos?'). "')) {
+                $('.del-lot-photo').click();
+            }
+        })
+        ", CClientScript::POS_END);
+
         $this->render(
             'view',
             array(
                 'model' => $this->model,
                 'type' => $type,
-                'mass_upload' => $mass_upload
             )
         );
     }

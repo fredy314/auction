@@ -26,8 +26,6 @@
  * along with MolotokSoftware.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-/** @var $model User */
 ?>
 <? $this->widget('frontend.widgets.user.UserPageLabel', [
     'user'       => $model,
@@ -38,3 +36,4 @@
 )); ?>
 
 <div class="about_me"><?= $model->about; ?></div>
+

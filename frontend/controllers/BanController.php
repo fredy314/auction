@@ -40,10 +40,9 @@ class BanController extends FrontController
         );
     }
 
-    // Вывод информации о бане пользователя
     public function actionIndex()
     {
-        $this->pageTitle = 'Бан';
+        $this->pageTitle = Yii::t('basic', 'Banned');
         $this->render('index');
     }
 }

@@ -56,8 +56,13 @@ class ProController extends FrontController
 
     public function actionIndex()
     {
-        $this->pageTitle = 'PRO аккаунт и услуги';
-        $this->render('index');
+        $this->pageTitle = Yii::t('basic', 'PRO account');
+
+        $text = Yii::app()->db->createCommand()->select('text_pro_account')->from('pages_pro')->queryRow();
+
+        $this->render('index', [
+            'text' => $text,
+        ]);
     }
 
 }

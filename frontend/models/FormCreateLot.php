@@ -64,11 +64,7 @@ class FormCreateLot extends CFormModel
             array('description', 'descValidator'),
 			array(
                 'price, starting_price',
-                'numerical',
-                'min' => 0,
-                'max' => 99999999,
-                'tooBig' => Yii::t('basic', 'Price too high'),
-                'tooSmall' => Yii::t('basic', 'Specify price'),
+                'numerical', 'numberPattern'=>'/^[0-9]{1,9}(\.[0-9]{1,2})?$/'
             ),
             array('conditions_transfer, add_contact_info', 'length'),
             array('is_auto_republish', 'boolean'),
@@ -91,15 +87,14 @@ class FormCreateLot extends CFormModel
 
     public function beforeValidate()
     {
-        /* Тип аукциона */
 
-        /* С 1 рубля */
+        /* From 1 */
         if ($this->type_transaction == Auction::TP_TR_START_ONE) {
             $this->starting_price = 1;
         }
 
 
-        /* Фиксированная цена */
+        /* Buy now */
         if ($this->type_transaction == Auction::TP_TR_SALE) {
             $this->starting_price = 0;
             if (((int)$this->price) <= 0 && $this->scenario != 'nomain') {
@@ -111,21 +106,20 @@ class FormCreateLot extends CFormModel
         if ($this->type_transaction == Auction::TP_TR_STANDART) {
 
             if (!$this->hasErrors()) {
-                /* Стандартный */
-                if (((int)$this->starting_price) <= 0 && $this->scenario != 'nomain') {
+                if (((float)$this->starting_price) <= 0 && $this->scenario != 'nomain') {
                     $this->addError('starting_price', Yii::t('basic', 'Specify the starting price'));
                 }
             }
 
             if (!$this->hasErrors()) {
                 if (($this->price > 0) && ($this->starting_price > $this->price)) {
-                    $this->addError('starting_price', Yii::t('basic', 'Starting price may not be more than buy now price'));
+                    $this->addError('starting_price', Yii::t('basic', 'Starting price can\'t be more than buy now price'));
                 }
             }
 
             if (!$this->hasErrors()) {
                 if (($this->price > 0) && ($this->starting_price == $this->price)) {
-                    $this->addError('starting_price', Yii::t('basic', 'Starting price may not be equal to the buy now price'));
+                    $this->addError('starting_price', Yii::t('basic', 'Starting price can\'t be equal to the buy now price'));
                 }
             }
         }

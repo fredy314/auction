@@ -24,7 +24,6 @@ return [
         'application.extensions.*',
         'application.helpers.*',
         'application.models.*',
-        'common.models.Layers.BaseAuction.*',
         'common.extensions.mail.YiiMailMessage',
         'common.extensions.consoleRunner.ConsoleRunner',
     ],
@@ -58,19 +57,13 @@ return [
             'isFirstVersion'  => true,
             'isSecondVersion' => false,
         ],
-        'billing'           => [
-            'class'             => 'common.components.billing.Billing',
-            'currencyRateCache' => 60 * 60 // Время кэширования в секундах для получения курса валюты.
-        ],
         'accessManager'     => ['class' => 'common.components.AccessManager'],
-
     ],
     'params'         => [
         'php.defaultCharset'       => 'utf-8',
         'php.timezone'             => 'Europe/Moscow',
-
-        // Минимальный шаг ставки в процентах.
-        'minStepRatePercentage'    => 1,
+        'minStepRatePercentage'    => 5,
+        'maintenanceMode'          => false
 
     ],
 ];

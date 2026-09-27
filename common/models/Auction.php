@@ -28,7 +28,7 @@
 
 class Auction extends BaseAuction
 {
-    //Продолжительность торгов duration
+    // duration
     const ONE_DAY = 1;
     const TWO_DAY = 2;
     const THREE_DAY = 3;
@@ -37,13 +37,15 @@ class Auction extends BaseAuction
     const TEN_DAY = 6;
     const TWO_WEEK = 7;
     const THREE_WEEK = 8;
-    //Тип сделки
-    const TP_TR_STANDART = 0; //Стандартный
-    const TP_TR_SALE = 1; //Фиксированная цена
-    const TP_TR_START_ONE = 2; //С 1 рубля
+
+    //type_transaction
+    const TP_TR_STANDART = 0; // Standart
+    const TP_TR_SALE = 1; // Buy now
+    const TP_TR_START_ONE = 2; // From 1
+
     //status
-    const ST_SOLD_BLITZ = 2; //продан по блиц-цене
-    const ST_COMPLETED_SALE = 3; //завершенный ПОБЕДОЙ В АУКЦИОНЕ
+    const ST_SOLD_BLITZ = 2; // Sold for buy now price
+    const ST_COMPLETED_SALE = 3; // Sold winner.
 
     static $versions = array(
         'big' => array(
@@ -207,7 +209,7 @@ class Auction extends BaseAuction
         if ($this->type_transaction == Auction::TP_TR_SALE) {
             $this->starting_price = 0;
             if (((int)$this->price) <= 0) {
-                $this->addError('price', 'Укажите цену');
+                $this->addError('price', Yii::t('basic', 'Specify price'));
             }
         }
 
@@ -216,20 +218,20 @@ class Auction extends BaseAuction
 
             if (!$this->hasErrors()) {
                 /* Стандартный */
-                if (((int)$this->starting_price) <= 0) {
-                    $this->addError('starting_price', 'Укажите начальную цену');
+                if (((float)$this->starting_price) <= 0) {
+                    $this->addError('starting_price', Yii::t('basic', 'Specify the starting price'));
                 }
             }
 
             if (!$this->hasErrors()) {
                 if (($this->price > 0) && ($this->starting_price > $this->price)) {
-                    $this->addError('starting_price', 'Начальная цена не может быть больше Блиц-цены');
+                    $this->addError('starting_price', Yii::t('basic', 'Starting price can\'t be more than buy now price'));
                 }
             }
 
             if (!$this->hasErrors()) {
                 if (($this->price > 0) && ($this->starting_price == $this->price)) {
-                    $this->addError('starting_price', 'Начальная цена не может равняться Блиц-цены');
+                    $this->addError('starting_price', Yii::t('basic', 'Starting price can\'t be equal to the buy now price'));
                 }
             }
         }
@@ -348,7 +350,6 @@ class Auction extends BaseAuction
                         'auction',
                         array(
                             'sales_id' => 0,
-                            'update' => time(),
                             'quantity' => $lot['quantity'] - $quantity,
                             'quantity_sold' => $lot['quantity_sold'] + $quantity,
                         ),
@@ -380,7 +381,6 @@ class Auction extends BaseAuction
                     /**
                      * сделать предыдущую ставку активной
                      */
-
                     $activeBid = Yii::app()->db->createCommand()
                         ->from('bids')
                         ->select('bid_id')
@@ -400,7 +400,6 @@ class Auction extends BaseAuction
                             'auction',
                             array(
                                 'current_bid' => (int)$activeBid['bid_id'],
-                                'update' => time(),
                             ),
                             'auction_id=:id',
                             array(':id' => $id)
@@ -418,7 +417,6 @@ class Auction extends BaseAuction
                             'sales_id' => $sales_id,
                             'quantity' => $lot['quantity'] - $quantity,
                             'quantity_sold' => $lot['quantity_sold'] + $quantity,
-                            'update' => time(),
                             'status' => Auction::ST_SOLD_BLITZ
                         ),
                         'auction_id=:id',
@@ -438,10 +436,10 @@ class Auction extends BaseAuction
     public static function getStatusList()
     {
         return array(
-            self::ST_ACTIVE => 'активный',
-            self::ST_COMPLETED_SALE => 'выигран',
-            self::ST_SOLD_BLITZ => 'куплен',
-            self::ST_COMPLETED_EXPR_DATE => 'завершен'
+            self::ST_ACTIVE => Yii::t('basic', 'Active'),
+            self::ST_COMPLETED_SALE => Yii::t('basic', 'Sold winner'),
+            self::ST_SOLD_BLITZ => Yii::t('basic', 'Sold buynow'),
+            self::ST_COMPLETED_EXPR_DATE => Yii::t('basic', 'Completed')
         );
     }
 

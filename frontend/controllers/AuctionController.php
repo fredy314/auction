@@ -9,7 +9,7 @@
  */
 
 /**
- * 
+ *
  * This file is part of MolotokSoftware.
  *
  * MolotokSoftware is free software: you can redistribute it and/or modify
@@ -21,7 +21,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
  * You should have received a copy of the GNU General Public License
  * along with MolotokSoftware.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -38,7 +37,7 @@ class AuctionController extends FrontController
             [
                 'ESetReturnUrlFilter - bidBlitz, newBid',
             ],
-            [   'frontend.filters.XssFilter - view,newBid,bidBlitz,showBidsTable,getCity2,get_filter_city,removeBid',
+            ['frontend.filters.XssFilter - view,newBid,bidBlitz,showBidsTable,getCity2,get_filter_city,removeBid',
                 'clean' => 'all',
             ],
         ];
@@ -54,7 +53,7 @@ class AuctionController extends FrontController
                     'getCity2', 'track_owner',
                     'get_filter_city', 'removeBid', 'sliderPopupInfo', 'popupSliderHtml',
                 ],
-                'users'   => ['*'],
+                'users' => ['*'],
             ],
             ['deny'],
         ];
@@ -64,11 +63,11 @@ class AuctionController extends FrontController
     {
         return [
             'seo' => [
-                'class'                 => 'common.extensions.seo.SeoControllerBehavior',
+                'class' => 'common.extensions.seo.SeoControllerBehavior',
                 'defaultAttributeTitle' => 'name',
-                'titleAttribute'        => 'meta_title',
-                'descriptionAttribute'  => 'meta_description',
-                'keywordsAttribute'     => 'meta_keywords',
+                'titleAttribute' => 'meta_title',
+                'descriptionAttribute' => 'meta_description',
+                'keywordsAttribute' => 'meta_keywords',
             ],
         ];
 
@@ -77,13 +76,13 @@ class AuctionController extends FrontController
     public function actions()
     {
         return [
-            'newBid'      => [
+            'newBid' => [
                 'class' => 'frontend.controllers.auction.NewBidAction',
             ],
-            'removeBid'   => [
+            'removeBid' => [
                 'class' => 'frontend.controllers.auction.RemoveBidAction',
             ],
-            'bidBlitz'    => [
+            'bidBlitz' => [
                 'class' => 'frontend.controllers.auction.BidBlitzAction',
             ],
         ];
@@ -113,21 +112,38 @@ class AuctionController extends FrontController
 
     public function actionIndex()
     {
+        if (isset($_GET['search']) && !empty($_GET['search'])) {
+            $search_active = true;
+
+            $number_lot = trim(CHtml::encode($_GET['search']));
+
+            if (is_numeric($number_lot)) {
+                $res = Yii::app()->db->createCommand()
+                    ->select('auction_id')
+                    ->from('auction')
+                    ->where('auction_id = :id', [':id' => $number_lot])
+                    ->queryScalar();
+
+                if (!empty($res)) {
+                    $this->redirect('/auction/' . $res);
+                }
+            }
+        } else {
+            $search_active = false;
+        }
+
         $num_page_size = $this->getPageSize();
         $path = Yii::app()->request->getParam('path', null);
         $this->layout = 'auction';
-        $this->pageTitle = 'Аукцион';
+        $this->pageTitle = Yii::t('basic', 'Auction');
 
         if (!isset($_GET['filter'])) {
             $_GET['filter'] = 'oll';
         }
+        $to_search_filter = $_GET['filter'];
 
-        $active_search = false;
-        $result_total = 0;
-        $auc_count = [];
-
+        $auc_id_arr = [];
         $options = [];
-        /** @var Category|bool $category */
         $category = false;
         $params = [];
 
@@ -148,7 +164,7 @@ class AuctionController extends FrontController
             $filter->filters = $_GET['Filter'];
         }
 
-        // Регионы и Города
+        // Regions and Cities
         if ($filter->id_country && intval($filter->id_country) > 0) {
             $sql->andWhere('a.id_country=:id_country');
             $count_sql->andWhere('a.id_country=:id_country');
@@ -167,22 +183,14 @@ class AuctionController extends FrontController
             $params[':id_city'] = $filter->id_city;
         }
 
-        if (isset($_GET['search']) && !empty($_GET['search']) && $_GET['search'] !== 'Введите фразу для поиска') {
-            $search = strip_tags($_GET['search']);
+        if (isset($_GET['search']) && !empty($_GET['search'])) {
+            $search = CHtml::encode($_GET['search']);
 
-            $result = Item::searchHelper($search);
+            $result = Item::searchHelper($search, $to_search_filter);
 
             if (count($result) > 0) {
                 foreach ($result as $item) {
-                    // Составляем массив из идентификаторов найденных аукционов
                     $auc_id_arr[] = intval($item['auction_id']);
-
-                    // Составляем массив с идентификаторами категорий и кол-вом аукционов в них из найденных результтаов
-                    if (isset($auc_count[$item['category_id']])) {
-                        $auc_count[$item['category_id']]++;
-                    } else {
-                        $auc_count[$item['category_id']] = 1;
-                    }
                 }
 
                 $auc_list = implode(",", $auc_id_arr);
@@ -190,16 +198,11 @@ class AuctionController extends FrontController
                 $sql->andWhere("a.auction_id IN ($auc_list)");
                 $count_sql->andWhere("a.auction_id IN ($auc_list)");
 
-                // говорим виджету категорий что поиск дал результаты
-                $this->active_search = true;
             } else {
                 $sql->andWhere("a.auction_id=0");
                 $count_sql->andWhere("a.auction_id=0");
             }
 
-
-            $active_search = true;
-            $result_total = count($result);
         }
 
         if ($filter->price_min == !'') {
@@ -217,7 +220,7 @@ class AuctionController extends FrontController
             ';
             $sql->andWhere($q);
             $count_sql->andWhere($q);
-            $params[':price_min'] = FrontBillingHelper::calculateRUR($filter->price_min);
+            $params[':price_min'] = $filter->price_min;
         }
         if ($filter->price_max == !'') {
             $q = '
@@ -234,7 +237,7 @@ class AuctionController extends FrontController
             ';
             $sql->andWhere($q);
             $count_sql->andWhere($q);
-            $params[':price_max'] = FrontBillingHelper::calculateRUR($filter->price_max);
+            $params[':price_max'] = $filter->price_max;
         }
 
         if (isset($_GET['Filter']['option'][0]) && (count($_GET['Filter']['option'][0]) > 0)) {
@@ -313,9 +316,9 @@ class AuctionController extends FrontController
                             }
 
                             if (!empty($where)) {
-                                $where .= ' OR  (aav_' . $key . '.attribute_id=:attr_id_' . $i . ' and aav_' . $key . '.value_id=:val_id_' . $i . $childCondition.' ) ';
+                                $where .= ' OR  (aav_' . $key . '.attribute_id=:attr_id_' . $i . ' and aav_' . $key . '.value_id=:val_id_' . $i . $childCondition . ' ) ';
                             } else {
-                                $where .= '(aav_' . $key . '.attribute_id=:attr_id_' . $i . ' and aav_' . $key . '.value_id=:val_id_' . $i . $childCondition.' ) ';
+                                $where .= '(aav_' . $key . '.attribute_id=:attr_id_' . $i . ' and aav_' . $key . '.value_id=:val_id_' . $i . $childCondition . ' ) ';
                             }
 
                             $params[':attr_id_' . $i] = $key;
@@ -331,7 +334,6 @@ class AuctionController extends FrontController
             }
         }
 
-        // Фильр по Диапазонам
         if (isset($_GET['Filter']['option'][1]) && count($_GET['Filter']['option'][1]) > 0) {
             foreach ($_GET['Filter']['option'][1] as $key => $value) {
                 if (preg_match("/^[0-9]+$/", $key) && ((isset($value['from']) && $value['from'] > 0) || (isset($value['to']) && $value['to'] > 0))) {
@@ -411,28 +413,15 @@ SQL;
         }
         //end category
 
-        // for CategoriesWidget
-        if ($this->active_search) {
-            $catsData = $this->prepareSearchCategoriesTreeData(
-            $auc_id_arr,
-            $category ? $category->getPrimaryKey() : 0,
-            $d);
-
-            if (!empty($catsData['userSelectedCategoriesIds'])) {
-                $sql->andWhere(['in', 'a.category_id', $catsData['userSelectedCategoriesIds']]);
-                $count_sql->andWhere(['in', 'a.category_id', $catsData['userSelectedCategoriesIds']]);
-            }
-        }
-
-        //filter
+        //filter type_transaction
         if (isset($_GET['filter'])) {
             if ($_GET['filter'] == 'default') {
                 $count_sql->andWhere(' a.starting_price != 0');
                 $sql->andWhere('a.starting_price != 0');
             }
             if ($_GET['filter'] == 'buynow') {
-                $count_sql->andWhere('a.starting_price=0');
-                $sql->andWhere('a.starting_price=0');
+                $count_sql->andWhere('a.price != 0');
+                $sql->andWhere('a.price != 0');
             }
             if ($_GET['filter'] == 'nulls') {
                 $count_sql->andWhere('a.type_transaction=' . Auction::TP_TR_START_ONE);
@@ -477,45 +466,49 @@ SQL;
 
         $dataProvider = new CSqlDataProvider($sql->text, [
             'totalItemCount' => $count,
-            'keyField'       => 'auction_id',
-            'params'         => $params,
-            'sort'           => [
-                'multiSort'    => false,
-                'attributes'   => [
-                    'price'   => [
-                        'asc'     => 'IF(current_bid=0, IF (a.starting_price = 0, a.price, a.starting_price), current_bid) ASC',
-                        'desc'    => 'IF(current_bid=0, IF (a.starting_price = 0, a.price, a.starting_price), current_bid) DESC',
-                        'label'   => 'Item Price',
+            'keyField' => 'auction_id',
+            'params' => $params,
+            'sort' => [
+                'multiSort' => false,
+                'attributes' => [
+                    'price' => [
+                        'asc' => 'IF(current_bid=0, IF (a.starting_price = 0, a.price, a.starting_price), current_bid) ASC',
+                        'desc' => 'IF(current_bid=0, IF (a.starting_price = 0, a.price, a.starting_price), current_bid) DESC',
+                        'label' => 'Item Price',
                         'default' => 'desc',
                     ],
-                    'date'    => [
-                        'asc'     => 'created',
-                        'desc'    => 'created  DESC',
-                        'label'   => 'Item date',
+                    'date' => [
+                        'asc' => 'created',
+                        'desc' => 'created  DESC',
+                        'label' => 'Item date',
                         'default' => 'desc',
                     ],
-                    'viewed'  => [
-                        'asc'     => 'viewed',
-                        'desc'    => 'viewed DESC',
-                        'label'   => 'Item viewed',
+                    'viewed' => [
+                        'asc' => 'viewed',
+                        'desc' => 'viewed DESC',
+                        'label' => 'Item viewed',
                         'default' => 'desc',
                     ],
                     'numBids' => [
-                        'asc'  => 'bid_count ASC',
+                        'asc' => 'bid_count ASC',
                         'desc' => 'bid_count DESC',
                     ],
                     'dateEnd' => [
-                        'asc'     => 'bidding_date',
-                        'desc'    => 'bidding_date DESC',
+                        'asc' => 'bidding_date',
+                        'desc' => 'bidding_date DESC',
                         'default' => 'asc',
                     ],
                 ],
                 'defaultOrder' => 'auction_order DESC',
             ],
-            'pagination'     => [
+            'pagination' => [
                 'pageSize' => $num_page_size,
             ],
         ]);
+
+        if ($count == 0) {
+            $search_active = false;
+        }
 
         $options = AttributeHelper::makeNestedDependentExpanded(
             Models::indexBy($options, 'attribute_id')
@@ -525,9 +518,9 @@ SQL;
 
         $auctions = $dataProvider->getData();
 
-        // Выбираем всех продавцов для использования в представлении.
+        // Select all seller for using in views
         $userIds = ArrayHelper::getColumn($auctions, 'owner');
-        $userIds = array_filter($userIds, function($id) {
+        $userIds = array_filter($userIds, function ($id) {
             return $id > 0;
         });
         $users = User::getByIds(
@@ -536,7 +529,7 @@ SQL;
             'user_id'
         );
 
-        // Выбираем все города для использования в представлении.
+        // Select all cities for using in views
         $cityIds = array_filter(ArrayHelper::getColumn($auctions, 'id_city'));
         $cityIds[] = 0;
         $cities = ArrayHelper::index(
@@ -544,23 +537,22 @@ SQL;
         );
 
         $auctionsImages = AuctionHelper::getImagesByIds(
-            ArrayHelper::getColumn($dataProvider->getData(), 'auction_id')
+            ArrayHelper::getColumn($auctions, 'auction_id')
         );
 
         $this->render(
             'index',
             [
-                'category'                 => $category,
-                'dataProvider'             => $dataProvider,
-                'users'                    => $users,
-                'cities'                   => $cities,
-                'filter'                   => $filter,
-                'options'                  => $options,
-                'active_search'            => $active_search,
-                'result_total'             => $result_total,
-                'auc_count'                => $auc_count,
+                'category' => $category,
+                'dataProvider' => $dataProvider,
+                'users' => $users,
+                'cities' => $cities,
+                'filter' => $filter,
+                'options' => $options,
+                'search_active' => $search_active,
                 'showRecommendedContainer' => $showRecommendedContainer,
-                'auctionsImages'           => $auctionsImages,
+                'auctionsImages' => $auctionsImages,
+                'auc_id_arr' => $auc_id_arr,
             ]
         );
     }
@@ -591,7 +583,7 @@ SQL;
 
         $this->layout = 'auction';
 
-        $dependency = new CDbCacheDependency('SELECT `update` FROM auction WHERE auction_id='.$id);
+        //  $dependency = new CDbCacheDependency('SELECT `update` FROM auction WHERE auction_id='.$id);
         $data = Yii::app()->db->createCommand()
             ->select(
                 'a.*, bid.price as current_bid, bid.bid_id as current_bid_id, u.login as user_login, u.pro as user_pro, u.rating as user_rating, u.user_id, f.favorite_id'
@@ -614,7 +606,6 @@ SQL;
         $isOwnerUser = Getter::userModel() && Getter::userModel()->user_id == $data['owner'];
 
         if (!$isOwnerUser) {
-            // Общий счетчик и учет статистики просомтров
             Auction::model()->updateCounters(['viewed' => 1], 'auction_id=:id', [':id' => $id]);
         }
 
@@ -628,8 +619,9 @@ SQL;
                     ->insert(
                         'viewed_count',
                         [
-                            'auction_id'  => $id,
-                            'day_viewed'  => 1,
+                            'auction_id' => $id,
+                            'day_viewed' => 1,
+                            'type' => 0,
                             'date_viewed' => $today,
                         ]
                     );
@@ -645,7 +637,7 @@ SQL;
             }
         }
 
-        $dependency2 = new CDbCacheDependency('SELECT MAX(`update`) FROM auction_attribute_value WHERE auction_id='.$id);
+        //  $dependency2 = new CDbCacheDependency('SELECT MAX(`update`) FROM auction_attribute_value WHERE auction_id='.$id);
         $params = Yii::app()->db->createCommand()
             ->select('a.name, ca.sort, av.value as av_value, acv.value as value, a.type, a.child_id')
             ->from('auction_attribute_value acv')
@@ -676,7 +668,7 @@ SQL;
         $this->render(
             'view',
             [
-                'base'   => $data,
+                'base' => $data,
                 'params' => $params,
                 'images' => $images,
                 'questionForm' => $questionForm,
@@ -705,7 +697,6 @@ SQL;
         }
     }
 
-    // Следить за продавцом
     public function actionTrack_owner($owner)
     {
         if (!Yii::app()->user->isGuest && Yii::app()->request->isAjaxRequest) {
@@ -733,7 +724,6 @@ SQL;
         }
     }
 
-    // Получаем список городов для фильтра списка аукционов
     public function actionGet_filter_city($id)
     {
         if (Yii::app()->request->isAjaxRequest && preg_match("/^[0-9]+$/", $id)) {
@@ -744,10 +734,10 @@ SQL;
                 ->queryAll();
 
             echo '
-            <label>Город</label>
-            <p class="city_f">
-            <select tabindex="1" autocomplete="off" name="Filter[city]" id="Filter_city">
-            <option value=""> - выберите город -</option>
+                <label>' . Yii::t('basic', 'City') . '</label>
+                <p class="city_f">
+                <select tabindex="1" autocomplete="off" name="Filter[city]" id="Filter_city">
+                <option value="">' . Yii::t('basic', 'select a city') . '</option>
             ';
 
             if (!empty($goroda)) {

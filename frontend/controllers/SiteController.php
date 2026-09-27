@@ -97,7 +97,6 @@ class SiteController extends FrontController
 
     }
 
-
     public function actionImage()
     {
         $dir = Yii::getPathOfAlias('frontend.www.i') . '/';
@@ -135,7 +134,7 @@ class SiteController extends FrontController
 
                         }
 
-                        print "Файл: $file : тип: " . filetype($dir . $file) . "<br>";
+                        print "File: $file : type: " . filetype($dir . $file) . "<br>";
                     }
                 }
                 closedir($dh);

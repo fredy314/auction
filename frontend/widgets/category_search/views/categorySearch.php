@@ -9,7 +9,7 @@
  */
 
 /**
- * 
+ *
  * This file is part of MolotokSoftware.
  *
  * MolotokSoftware is free software: you can redistribute it and/or modify
@@ -21,21 +21,30 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
  * You should have received a copy of the GNU General Public License
  * along with MolotokSoftware.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * Class FrontGetter
- */
-class FrontGetter extends Getter
-{
-    /**
-     * @return TransactionModule
-     */
-    public static function transactionModule()
-    {
-        return Yii::app()->getModule('transaction');
-    }
-}
+
+?>
+
+    <div class="list-group main_cat">
+
+
+        <?php
+        echo '<a class="maincat list-group-item" href="' . $cat_alias . '"><b>' . $cat_name . '</b></a>';
+
+        if ($descendants) {
+            echo '<a class="list-group-item" href="'. $path. $category->alias . '?' . $getWithOutCatId . '"><b>' . $category->name . '</b></a>';
+        }
+        ?>
+        <?php foreach ($mass as $each): ?>
+
+            <a class="subcat list-group-item" href="<?= $path; ?><?= $each['alias'] . '?' . $getWithOutCatId; ?>">
+
+                <?= $each['name']; ?><span class="main_badge"> (<?= $each['cnt']; ?>)</span></a>
+
+
+        <?php endforeach; ?>
+
+    </div>

@@ -44,13 +44,19 @@ class Setting extends CActiveRecord
     const TYPE_FIELD_TEXT_AREA = 2;
     const TYPE_FIELD_CHECK_BOX = 3;
     const TYPE_FIELD_LOCATION = 4;
+    const TYPE_FIELD_SELECT_BOX = 5;
 
     const TYPE_COMMON = 1;
     const TYPE_PRO = 2;
+    const TYPE_LOCALIZATION = 3;
 
     public $id_city;
     public $id_region;
     public $id_country;
+
+   /* public function getDbConnection(){
+        return Yii::app()->configDb;
+    }*/
 
     /**
      * @return string the associated database table name
@@ -67,13 +73,13 @@ class Setting extends CActiveRecord
     public function rules()
     {
         return array(
-            array('name, value', 'required'),
-            array('type', 'numerical', 'integerOnly' => true),
-            ['comission', 'boolean'],
-            array('name, title, description', 'length', 'max' => 255),
-            array('value', 'length', 'max' => 512),
-            array('preload', 'length', 'max' => 1),
-            array('id, name, title, type, value, description, preload, update', 'safe', 'on' => 'search'),
+            ['name, value', 'required'],
+            ['type', 'numerical', 'integerOnly' => true],
+            ['commission', 'boolean'],
+            ['name, title, description', 'length', 'max' => 255],
+            ['value', 'length', 'max' => 512],
+            ['preload', 'length', 'max' => 1],
+            ['id, name, title, type, value, description, preload, update', 'safe', 'on' => 'search'],
         );
     }
 
@@ -165,10 +171,29 @@ class Setting extends CActiveRecord
      */
 
 
+
+
+    public static function updateSettings($configs, $type)
+    {
+        foreach ($configs as $name => $value) {
+            self::model()->updateAll(
+                array('value' => $value),
+                "name=:name and type=:type",
+                array(
+                    ':name' => $name,
+                    ':type' => $type
+                )
+            );
+        }
+
+        Yii::app()->user->setFlash('success', 'Успешно сохранено');
+    }
+
     /**
      * @param int $type
      * @return Setting
      */
+
     public function getByType($type)
     {
         $this->getDbCriteria()->mergeWith(

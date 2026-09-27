@@ -99,9 +99,9 @@ $auctionRandom = Yii::app()->db
             </a>
         </div><!-- End Carousel -->
 
-        <!--    <a data-target="#myCarousel" data-slide-to="0" class="active">Первый слайд</a>
-            <a data-target="#myCarousel" data-slide-to="1">второй слайд</a>
-            <a data-target="#myCarousel" data-slide-to="2">трейти слайд</a>
+        <!--    <a data-target="#myCarousel" data-slide-to="0" class="active">First slide</a>
+            <a data-target="#myCarousel" data-slide-to="1">Second slide</a>
+            <a data-target="#myCarousel" data-slide-to="2">Third slide</a>
         -->
 
     </div>
@@ -145,11 +145,9 @@ $auctionRandom = Yii::app()->db
                             </div>
                             <div>
                                 <?php $price = Item::getStaticPriceValue($item, false); ?>
-                                <span class="span_cost <?= !$webUser->getCurrencyIsRUR() ? 'not-rur-currency' : '' ?>">
-                                    <?= FrontBillingHelper::getUserPrice($price, false); ?>
-                                    <?php if (!$webUser->getCurrencyIsRUR()): ?>
-                                        <?= $webUser->getCurrencySymbol() ?>
-                                    <?php endif; ?>
+                                <span class="span_cost">
+                                    <?= PriceHelper::formate($price); ?>
+
                                 </span>
                             </div>
                             <div class="clear"></div>

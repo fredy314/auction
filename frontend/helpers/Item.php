@@ -31,7 +31,7 @@ class Item
 
     public static function getPriceFormat($value)
     {
-        return FrontBillingHelper::getUserPriceWithCurrency($value);
+        return PriceHelper::formate($value);
     }
 
     public static function getLink($item, $htmlOptions = array())
@@ -55,7 +55,7 @@ class Item
      * @param array  $htmlOptions
      * @param string $prefix
      * @param array  $params
-     *  - false|array setDataImages Загружает в data атрубиты все фото кроме главной
+     *  - false|array setDataImages
      *
      * @return string
      */
@@ -82,7 +82,6 @@ class Item
 
             $imageSrc = AuctionHelper::getImageURL($item, $item['image'], $prefix);
 
-            // Если задали параметр, пишем в дата атрибуты URL картинок для дальнейшего использования в слайдере.
             if (is_array($params['setDataImages']) && count($params['setDataImages']) > 0) {
 
                 $imagesCount = isset($params['setDataImages']) ? count($params['setDataImages']) : 0;
@@ -145,7 +144,7 @@ class Item
         $dateTime = '';
 
         if ($item['status'] != Auction::ST_ACTIVE) {
-            $dateTime = '<span>Торги завершены</span>';
+            $dateTime = '<span>'.Yii::t('basic', 'Ended').'</span>';
         }
 
         /**
@@ -156,7 +155,7 @@ class Item
         $interval = $date->diff($date_end);
 
         if ($interval->format('%R') == '-') {
-            $dateTime = '<span>Торги завершены</span>';
+            $dateTime = '<span>'.Yii::t('basic', 'Ended').'</span>';
         } else {
             $days = '';
             if ($interval->format('%a') > 0) {
@@ -168,7 +167,7 @@ class Item
 
                 $time = $interval->format('%H:%I');
             } else {
-                $time = '<span style="font-size: 15px;">'.$interval->format('%H:%I:%S').'</span>';
+                $time = '<span style="font-size: 14px;">'.$interval->format('%H:%I:%S').'</span>';
             }
 
             $dateTime = $days . ' ' . $time;
@@ -244,27 +243,26 @@ class Item
                 $s_p = $item['current_bid'];
             }
 
-            $notRurCurrencyCss = Getter::webUser()->getCurrencyIsRUR() ? '' : 'not-rur-currency';
 
             if ($s_p > 0) {
                 $result .= CHtml::tag(
                     'span',
                     [
-                        'class' => 'price_1 ' . $notRurCurrencyCss,
-                        'title' => 'Текущая цена',
+                        'class' => 'price_1 ',
+                        'title' => Yii::t('basic', 'Current price'),
                     ],
-                    FrontBillingHelper::getUserPriceWithCurrency($s_p, ['rurCurrencySign' => false])
+                    PriceHelper::formate($s_p)
                 );
             }
 
             if (!empty($item['price']) && $item['price'] > 0) {
-                $class = [$notRurCurrencyCss];
+                $class = [];
                 if (empty($result)) {
                     $class[] = 'standart-auction';
                 }
                 $class = implode(' ', $class);
-                $price = FrontBillingHelper::getUserPriceWithCurrency($item['price'], ['rurCurrencySign' => false]);
-                $result .= "\n" . '<span class="' . $class . ' price_2"><span title="Блиц-цена"><nobr>' . $price . "</nobr></span></span>";
+                $price = PriceHelper::formate($item['price']);
+                $result .= "\n" . '<span class="' . $class . ' price_2"><span title="'.Yii::t('basic', 'Buy now').'"><nobr>' . $price . "</nobr></span></span>";
             }
 
         return $result;
@@ -284,9 +282,14 @@ class Item
 
         $html = '';
         if ($item['type'] == BaseAuction::TYPE_AUCTION && $item['current_bid'] != 0 && $item['bid_count'] != 0) {
-            $html = CHtml::tag('span', $htmlOptions, Yii::t('app', 'LABEL_BIDS_COUNT', $item['bid_count']));
+            $html = CHtml::tag('span', $htmlOptions, Yii::t('app', '{n} bid|{n} bids|{n} bids|{n} bids', $item['bid_count']));
         }
         return $html;
+    }
+
+    public static function spanEnvelopment($value)
+    {
+        return '<span>'.$value.'</span>';
     }
 
     public static function issetItemsForCategory($category, $type, $itemId)
@@ -308,12 +311,29 @@ class Item
         return ($count == false) ? 0 : $count;
     }
 
-    public static function searchHelper($keyword) 
+    public static function searchHelper($keyword, $search_type_filter, $user = false)
     {
         $db = Yii::app()->db->createCommand();
         $db->select('auction_id, category_id');
         $db->from('auction');
         $db->where('status = 1');
+
+        if (isset($search_type_filter)) {
+            if ($search_type_filter == 'default') {
+                $db->andWhere('type_transaction = 0');
+            }
+            if ($search_type_filter == 'buynow') {
+                $db->andWhere('type_transaction = 1');
+            }
+            if ($search_type_filter == 'nulls') {
+                $db->andWhere('type_transaction = 2');
+            }
+        }
+
+        if ($user) {
+            $db->andWhere('owner = :owner', [':owner' => $user]);
+        }
+
         $db->andWhere("name LIKE '%$keyword%'");
 
         return $db->queryAll();

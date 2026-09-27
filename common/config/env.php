@@ -1,8 +1,12 @@
 <?php
 
 return [
-    'preload'    => ['log'],
+    'preload' => ['debug', 'log'],
     'components' => [
+
+        /*'debug' => array(
+            'class' => 'common.extensions.yii2-debug.Yii2Debug',
+        ),*/
         'db'  => [
             'connectionString'      => 'mysql:host=localhost;dbname=dbname',
             'emulatePrepare'        => true,
@@ -14,6 +18,11 @@ return [
             'tablePrefix'           => '',
             'schemaCachingDuration' => 0,
         ],
+        'configDb'=>array(
+            'class'=>'CDbConnection',
+            'connectionString'=>'sqlite:'.dirname(__FILE__).'/../data/setting.db',
+            'tablePrefix'=>'',
+        ),
         'mail'              => [
             'class'            => 'common.extensions.mail.YiiMail',
             'viewPath'         => 'frontend.views.mail',

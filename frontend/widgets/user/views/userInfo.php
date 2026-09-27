@@ -53,24 +53,24 @@
     </div>
 
 <?php elseif ($scope == UserInfo::SCOPE_TOP_USER_PANEL): ?>
-    <li><a href="/creator/lot"><b><?= Yii::t('basic', 'Create a lot') ?></a></b></li>
+    <li><a href="/creator/lot"><b><?= Yii::t('basic', 'Create item') ?></a></b></li>
     <li class="dropdown">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown"><?= Yii::t('basic', 'Your auction') ?> <b class="caret"></b></a>
         <ul class="dropdown-menu">
             <li><a href="/user/shopping/historyShopping"><?= Yii::t('basic', 'Purchases') ?></a></li>
             <li><a href="/user/sales/activeItems"><?= Yii::t('basic', 'Sales') ?></a></li>
-            <li><a href="/user/favorites/items"><?= Yii::t('basic', 'Favorite items') ?> <?= UI::showQuantity(CounterInfo::quantityFavItems()); ?></a></li>
-            <li><a href="/user/lenta/index"><?= Yii::t('basic', 'Your subscribe') ?> <?= UI::showQuantity(CounterInfo::quantityOtslItems()); ?></a></li>
+            <li><a href="/user/favorites/items"><?= Yii::t('basic', 'Favorite items') ?> <?= UI::showSmallQuantity(CounterInfo::quantityFavItems()); ?></a></li>
+            <li><a href="/user/lenta/index"><?= Yii::t('basic', 'Your subscribe') ?> <?= UI::showSmallQuantity(CounterInfo::quantityOtslItems()); ?></a></li>
             <li class="divider"></li>
-            <li><a href="/systemNotification/index"><?= Yii::t('basic', 'Notifications') ?> <?= UI::showQuantity(Getter::userModel()->getUnreadNotificationsCount()); ?></a></li>
-            <li><a href="/user/questions/index"><?= Yii::t('basic', 'Questions') ?> <?= UI::showQuantity(CounterInfo::quantityQuestionsForMe()); ?></a></li>
+            <li><a href="/systemNotification/index"><?= Yii::t('basic', 'Notifications') ?> <?= UI::showSmallQuantity(Getter::userModel()->getUnreadNotificationsCount()); ?></a></li>
+            <li><a href="/user/questions/index"><?= Yii::t('basic', 'Questions') ?> <?= UI::showSmallQuantity(CounterInfo::quantityQuestionsForMe()); ?></a></li>
         </ul>
     <li>
     <li class="dropdown">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown"><?= $userModel->outName(); ?> <b class="caret"></b></a>
         <ul class="dropdown-menu">
 
-            <li><a href="/user/balance"><?= Yii::t('basic', 'Balance') ?>: <?= Yii::t('basic', '${amount}', ['{amount}'=>Getter::userModel()->getBalance(2)]); ?></a></li>
+            <li><a href="/user/balance"><?= Yii::t('basic', 'Balance') ?>: <?= PriceHelper::formate(Getter::userModel()->getBalance(2)); ?></a></li>
             <li><a href="/user/pro/index"><?= Yii::t('basic', 'PRO account') ?></a></li>
             <li><a href="/user/settings/common"><?= Yii::t('basic', 'Settings') ?></a></li>
         </ul>

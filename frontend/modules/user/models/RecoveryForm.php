@@ -9,7 +9,7 @@
  */
 
 /**
- * 
+ *
  * This file is part of MolotokSoftware.
  *
  * MolotokSoftware is free software: you can redistribute it and/or modify
@@ -21,12 +21,9 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
  * You should have received a copy of the GNU General Public License
  * along with MolotokSoftware.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-
 class RecoveryForm extends CFormModel
 {
     public $email;
@@ -35,10 +32,17 @@ class RecoveryForm extends CFormModel
     public function rules()
     {
         return array(
-            array('email', 'required', 'message' => 'Не введена электронная почта'),
+            array('email', 'required', 'message' => Yii::t('basic', 'You need specify field "{attribute}"')),
             array('email', 'email'),
             array('email', 'checkEmail'),
         );
+    }
+
+    public function attributeLabels()
+    {
+        return [
+            'email' => Yii::t('basic', 'E-mail'),
+        ];
     }
 
     public function checkEmail($attribute, $params)
@@ -48,7 +52,9 @@ class RecoveryForm extends CFormModel
             if (!$this->_user) {
                 $this->addError(
                     'email',
-                    'Email "' . $this->email . '" не найден или пользователь заблокирован !'
+                    Yii::t('basic', 'E-mail {email} is not available', [
+                        '{email}' => $this->email
+                    ])
                 );
             }
         }

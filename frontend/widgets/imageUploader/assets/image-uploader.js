@@ -5,6 +5,8 @@
         uploadUrl: '',
         deleteUrl: '',
         arrangeUrl: '',
+        mainPhotoText: '',
+        additionalPhotoText: '',
         photos: []
     };
 
@@ -19,9 +21,9 @@
         function updateAction() {
             size = $('.image-container .image-item').size();
             if (size > 1) {
-                $('#image-upload-block .add-photo-top').html('<p>Основная фотография</p><p>Дополнительные фотографии</p>');
+                $('#image-upload-block .add-photo-top').html('<p>'+ settings.mainPhotoText +'</p><p>'+ settings.additionalPhotoText +'</p>');
             } else {
-                $('#image-upload-block .add-photo-top').html('<p>Основная фотография</p>');
+                $('#image-upload-block .add-photo-top').html('<p>'+ settings.mainPhotoText +'</p>');
             }
         }
 
@@ -124,8 +126,6 @@
 
             var uploadFileName = $('.file', $main).attr('name');
 
-
-
             var filesCount = files.length;
             var uploadedCount = 0;
             var ids = [];
@@ -173,7 +173,6 @@
             return false;
         }
 
-
             $('.file', $main).attr('multiple', 'true').on('change', function (e) {
 
 
@@ -185,8 +184,6 @@
 
         });
 
-
-        //events
         $($images).sortable({
             stop: function () {
                 update();
@@ -196,23 +193,14 @@
             placeholder: 'lot-plaseholder'
         }).disableSelection();
 
-
-        //castom input
-        /*$('.add-photo .lot-photo-inner').click(function (event) {
-            $(this).find('input').click();
-        });*/
-
         $('#image-upload-block').on('click', 'a.btn-remove', function () {
-            //if (confirm('Вы уверены, что хотите удалить изображения?')) {
+
                 deletePhoto($(this));
-            //}
             return false;
         });
 
-    }//end function
+    }
 
-
-    //   // The actual plugin
     $.fn.imageUploader = function (options) {
         if (this.length) {
             this.each(function () {
@@ -221,13 +209,6 @@
         }
     };
 
-    $(document).ready(function() {
-        $('.del-all-photos').click(function() {
-            if(confirm('Вы уверены, что хотите удалить все фотографии?')) {
-                $('.del-lot-photo').click();
-            }
-        })
-    })
 })(jQuery);
 
 

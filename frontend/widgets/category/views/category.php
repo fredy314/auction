@@ -39,6 +39,10 @@
         $categories = explode('/', $path);
         $category_name = array_pop($categories);
         $current_cat = Category::model()->find('alias=:alias', [':alias' => $category_name]);
+
+        if (empty($current_cat))
+            throw new CHttpException(404, Yii::t('basic', 'Category not found'));
+
         $categories = $current_cat->children()->findAll();
         $ancestors = $current_cat->ancestors()->findAll($current_cat->category_id);
 
@@ -51,7 +55,7 @@
         }
         $parent = $current_cat->parent;
         $cat_alias = ($parent->alias == 'root')?'auction':'auctions/'.$parent->alias;
-        $cat_name = ($parent->name == 'root')?'Все категории':$parent->name;
+        $cat_name = ($parent->name == 'root')?Yii::t('basic', 'All categories'):$parent->name;
 
 
         echo '<a class="maincat list-group-item" href="/'.$cat_alias.'"><b>'.$cat_name.'</b></a>';

@@ -9,7 +9,7 @@
  */
 
 /**
- * 
+ *
  * This file is part of MolotokSoftware.
  *
  * MolotokSoftware is free software: you can redistribute it and/or modify
@@ -21,17 +21,18 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
-
  * You should have received a copy of the GNU General Public License
  * along with MolotokSoftware.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 
 /**
- * Создания лотов, объявлений
+ * Create item
  */
 class CreatorController extends FrontController
 {
+    public $defaultAction = 'new';
+
     public function filters()
     {
         return array('accessControl');
@@ -53,33 +54,34 @@ class CreatorController extends FrontController
         );
     }
 
-    public $defaultAction = 'new';
-
-
     public function actionLot()
     {
-        $this->pageTitle = 'Создание лота';
+        $this->pageTitle = Yii::t('basic', 'Create item');
 
         $form = new FormCreateLot('main');
+
+        $sql = <<<SQL
+        select a.name, a.attribute_id, a.type, a.mandatory
+from attribute a 
+left join category_attributes ca on ca.attribute_id=a.attribute_id
+where ca.category_id=:id and a.type<>:type
+order by ca.sort ASC
+SQL;
+        $options = Yii::app()->db->createCommand($sql)->queryAll(true, array(
+            ':id' => $form->category_id,
+            ':type' => Attribute::TYPE_CHILD_ELEMENT
+        ));
 
         $this->performAjaxValidation($form, 'form-create-lot');
         $this->save($form, BaseAuction::TYPE_AUCTION);
 
-
         $this->render('lot', [
-            'model'                   => $form,
+            'model' => $form,
+            'ItemOptions' => $options,
         ]);
 
     }
 
-    /**
-     * @param FormCreateLot $form
-     * @param               $type
-     *
-     * @throws CDbException
-     * @throws CException
-     * @throws Exception
-     */
     public function save(FormCreateLot &$form, $type)
     {
         /** @var CHttpRequest $request */
@@ -94,8 +96,6 @@ class CreatorController extends FrontController
             }
 
             $form->attributes = $_POST[$class];
-
-            // Обработка полей доставки.
 
             if ($form->validate()) {
                 if ($type == BaseAuction::TYPE_AUCTION) {
@@ -139,8 +139,6 @@ class CreatorController extends FrontController
                     },
                     $text_item);
 
-                $text_item = $form->description;
-
                 $model->text = $text_item;
 
                 $model->id_country = $form->id_country;
@@ -176,12 +174,9 @@ class CreatorController extends FrontController
 
                     $transaction = $model->dbConnection->beginTransaction();
                     try {
-                        //сохраняем параметры
                         if (isset($_POST['options'])) {
-                            //сохранить выбранные значения
                             if (!empty($_POST['options'][0])) {
                                 foreach ($_POST['options'][0] as $key => $value) {
-                                    //checkbox list
                                     if (is_array($value)) {
                                         foreach ($value as $i => $item) {
                                             Yii::app()->db->createCommand()
@@ -209,8 +204,6 @@ class CreatorController extends FrontController
                                     }
                                 }
                             }
-
-                            //сохранить текстовые значения
                             if (!empty($_POST['options'][1])) {
                                 foreach ($_POST['options'][1] as $key => $value) {
                                     Yii::app()->db->createCommand()
@@ -232,14 +225,11 @@ class CreatorController extends FrontController
                     }
 
 
-                    // Обновляем счетчик изображений
                     $img_count = Yii::app()->db->createCommand()->select('COUNT(*)')->from('images')
                         ->where('item_id=:item_id', array(':item_id' => $model->auction_id))->queryScalar();
                     Yii::app()->db->createCommand()
                         ->update('auction', array('image_count' => $img_count), 'auction_id=:auction_id', array(':auction_id' => $model->auction_id));
 
-
-                    // Yii::app()->user->setFlash('success', 'Ваш лот успешно сохранен и будет опубликован');
                     $this->redirect(array('/auction/view', 'id' => $model->auction_id));
                 }
 
@@ -249,7 +239,6 @@ class CreatorController extends FrontController
 
     public function imageSave($model)
     {
-        /** ---------- IMAGES ------------------* */
         if (isset($_POST['identifier'])) {
             Yii::import('backend.extensions.imageUploader.ImageUploaderHelper');
             $images = ImageUploaderHelper::getFilesById($_POST['identifier'], 'frontend');
@@ -338,9 +327,8 @@ class CreatorController extends FrontController
     }
 
     /**
-     * возвращает подкатегории выбраной категории для select
+     * return subcategories Ids
      *
-     * @param type $cat_id
      */
     public function actionDynamicCategoriesForSelect($cat_id, $where_show = 0)
     {
@@ -349,7 +337,7 @@ class CreatorController extends FrontController
 
         if (count($categories) > 0) {
             $htmlOptions = array(
-                'empty' => '- выберите категорию -'
+                'empty' => Yii::t('basic', '- select category -')
             );
             RAjax::data(
                 array(
@@ -391,12 +379,6 @@ SQL;
         );
     }
 
-
-
-
-
-
-    // Действия над лотами
     public function actionWorkWithLots()
     {
         if (Yii::app()->request->isAjaxRequest && !Yii::app()->user->isGuest) {
@@ -404,7 +386,7 @@ SQL;
             $check_lots = $_GET['check_lots'];
 
             switch ($select_action) {
-                case 1: // Опубликовать лоты
+                case 1: // publish items
                     if (!empty($check_lots)) {
                         foreach ($check_lots as $lot) {
                             if ($lot != 0) {
@@ -417,7 +399,7 @@ SQL;
                         }
                     }
                     break;
-                case 2: // Удалить лоты
+                case 2: // remove items
                     if (!empty($check_lots)) {
                         foreach ($check_lots as $lot) {
                             if ($lot != 0) {
@@ -442,15 +424,12 @@ SQL;
         }
     }
 
-
-
-
     public function actionPublishSame($id)
     {
         /** @var Auction $auction */
         $auction = Auction::model()->findByPk($id);
 
-        if (!$auction) throw new CHttpException(404, 'Аукцион не найден');
+        if (!$auction) throw new CHttpException(404, 'Item not found');
 
         if ($auction->owner == Yii::app()->user->id) {
             $new_auction = new Auction;
@@ -474,15 +453,15 @@ SQL;
                 $this->redirect(array('editor/lot', 'id' => $new_auction->auction_id));
             } else {
                 Yii::log(sprintf(
-                    'Ошибка сохранения аукциона, errors: %s, attrs: %s',
+                    'Save item, errors: %s, attrs: %s',
                     CVarDumper::dumpAsString($new_auction->errors),
                     CVarDumper::dumpAsString($new_auction->attributes)
                 ), CLogger::LEVEL_ERROR);
 
-                throw new CHttpException(500, 'Ошибка сохранения аукциона');
+                throw new CHttpException(500, 'Save item error');
             }
         } else {
-            throw new CHttpException(403, 'Вы не являетесь владельцем аукциона');
+            throw new CHttpException(403, 'You isn\'t item\'s owner');
         }
     }
 }
